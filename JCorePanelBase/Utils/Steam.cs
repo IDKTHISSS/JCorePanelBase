@@ -1,56 +1,81 @@
-﻿using JCorePanelBase.Resources;
-using Microsoft.Win32;
+﻿
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using WindowsInput;
 
 namespace JCorePanelBase
 {
     public static class Steam
     {
-        public static async Task<JCSteamGuardResponse> RunSteamWithParams(JCSteamAccountInstance Account, string Params = null)
+        public static async Task<JCSteamGuardResponse> RunSteamWithParams(JCSteamAccountInstance Account, string Params = null, string CustomSteamPath = null)
         {
             ProcessStartInfo processStartInfo = new ProcessStartInfo();
-            processStartInfo.FileName = GlobalMenager.GetSteamPath();
-            processStartInfo.Arguments =  $"-login {Account.AccountInfo.Login} {Account.AccountInfo.Password} " + (Params == null ? "" : Params);
+            processStartInfo.FileName = CustomSteamPath == null ? GlobalMenager.GetSteamPath() : CustomSteamPath;
+            processStartInfo.Arguments = $"-login {Account.AccountInfo.Login} {Account.AccountInfo.Password} " + (Params == null ? "" : Params);
             Process SteamProcess = Process.Start(processStartInfo);
             Thread.Sleep(5000);
-            double Res = 0;
-            int trys = 0;
-            if(Account.AccountInfo.MaFile == null)
+            if (Account.AccountInfo.MaFile == null)
             {
                 return new JCSteamGuardResponse(true, "MaFile is not loaded.", SteamProcess.Id);
             }
-            while (Res < 17)
+            Thread.Sleep(10000);
+            Process[] processes = Utils.GetProcessesByParentPID(SteamProcess.Id, "steamwebhelper");
+            while (!NeedInput(processes))
             {
-                if (trys >= 20) { return new JCSteamGuardResponse(false, "Cant input code after 20 trys.", SteamProcess.Id); }
-                try
-                {
-                    Bitmap Screen = ScreenCapturer.Capture(SteamProcess.MainWindowHandle, 0, 0, 705, 430);
-                    Screen = Utils.AddImages(Screen, SteamGuard.Screen);
-                    Res = Utils.CompareImages(Screen, SteamGuard.EnterGuard);
-                    if (Res > 11.4f)
-                    {
-                        Utils.SendTextToNonActiveWindow(SteamProcess.MainWindowHandle, await Account.AccountInfo.MaFile.GenerateSteamGuardCodeAsync());
-                    }
-                }
-                catch
-                { }
-                trys++;
-                Thread.Sleep(2000);
+                Thread.Sleep(500);
+            }
+            Thread.Sleep(500);
+            Console.WriteLine("Found Login Window");
+            SetWindows(processes);
+            InputSimulator simulator = new InputSimulator();
+            simulator.Keyboard.TextEntry(Account.AccountInfo.Login);
+            simulator.Keyboard.KeyPress(WindowsInput.Native.VirtualKeyCode.TAB);
+            simulator.Keyboard.TextEntry(Account.AccountInfo.Password);
+            simulator.Keyboard.KeyPress(WindowsInput.Native.VirtualKeyCode.RETURN);
+            Console.WriteLine("Enter SteamGuard Window");
+            Thread.Sleep(2500);
+            while (IsVisible(processes))
+            {
+                SetWindows(processes);
+                simulator.Keyboard.TextEntry(Account.AccountInfo.MaFile.GenerateSteamGuardCode());
+                simulator.Keyboard.KeyPress(WindowsInput.Native.VirtualKeyCode.RETURN);
+                Thread.Sleep(5000);
             }
             return new JCSteamGuardResponse(true, "Success", SteamProcess.Id);
         }
-        public static uint GetWindowProcessId(IntPtr windowHandle)
+
+
+
+        private static bool NeedInput(Process[] processes)
         {
-            uint processId;
-            Win32.GetWindowThreadProcessId(windowHandle, out processId);
-            return processId;
+            foreach (var process in processes)
+            {
+                if (Utils.HasQRCode(ScreenCapturer.Capture(process.MainWindowHandle, 0, 0, 844, 527)))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        private static bool IsVisible(Process[] processes)
+        {
+            foreach (var process in processes)
+            {
+                if (Win32.IsWindowVisible(process.MainWindowHandle))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        private static void SetWindows(Process[] processes)
+        {
+            foreach (var process in processes)
+            {
+                Win32.SetForegroundWindow(process.MainWindowHandle);
+            }
         }
     }
 }

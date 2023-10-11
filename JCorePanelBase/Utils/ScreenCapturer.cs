@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -40,10 +41,16 @@ namespace JCorePanelBase
             int cropWidth = endX - startX;
             int cropHeight = endY - startY;
             Rectangle cropRect = new Rectangle(startX, startY, cropWidth, cropHeight);
-            Bitmap croppedBmp = new Bitmap(cropWidth, cropHeight, bmp.PixelFormat);
-            Graphics graphics = Graphics.FromImage(croppedBmp);
-            graphics.DrawImage(bmp, new Rectangle(0, 0, cropWidth, cropHeight), cropRect, GraphicsUnit.Pixel);
-            graphics.Dispose();
+
+            // Создаем новое изображение с форматом пикселей, который поддерживает редактирование
+            Bitmap croppedBmp = new Bitmap(cropWidth, cropHeight, PixelFormat.Format32bppRgb);
+
+            // Создаем объект Graphics для нового изображения
+            using (Graphics graphics = Graphics.FromImage(croppedBmp))
+            {
+                // Копируем обрезанную часть из оригинального изображения
+                graphics.DrawImage(bmp, new Rectangle(0, 0, cropWidth, cropHeight), cropRect, GraphicsUnit.Pixel);
+            }
 
             // Возвращаем обрезанное изображение
             return croppedBmp;

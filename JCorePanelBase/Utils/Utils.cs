@@ -2,18 +2,74 @@
 using SteamAuth;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Management;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using ZXing;
 
 namespace JCorePanelBase
 {
     public static class Utils
     {
+
+        public static bool HasQRCode(Bitmap bitmap)
+        {
+            BarcodeReader barcodeReader = new BarcodeReader();
+            Result[] results = barcodeReader.DecodeMultiple(bitmap);
+
+            return results != null && results.Length > 0;
+        }
+        public static Process[] GetProcessesByParentPID(int parentPID, string processName)
+        {
+            Process[] processes = Process.GetProcessesByName(processName);
+            return Array.FindAll(processes, process => IsChildProcess(process, parentPID));
+        }
+
+        // Метод для проверки, является ли процесс дочерним процессом указанного PID.
+        public static bool IsChildProcess(Process process, int parentPID)
+        {
+            try
+            {
+                while (process != null)
+                {
+                    if (process.Id == parentPID)
+                    {
+                        return true;
+                    }
+                    process = GetParentProcess(process);
+                }
+            }
+            catch (Exception)
+            {
+                // Обработка исключения при доступе к информации о процессе.
+            }
+
+            return false;
+        }
+
+        // Метод для получения родительского процесса.
+        public static Process GetParentProcess(Process process)
+        {
+            try
+            {
+                using (ManagementObject mo = new ManagementObject($"win32_process.handle='{process.Id}'"))
+                {
+                    mo.Get();
+                    int parentPID = Convert.ToInt32(mo["ParentProcessId"]);
+                    return Process.GetProcessById(parentPID);
+                }
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
         public static CookieContainer GetCookies(SessionData session)
         {
 
