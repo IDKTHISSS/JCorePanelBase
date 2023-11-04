@@ -46,10 +46,10 @@
       <HintPath>..\packages\Newtonsoft.Json.8.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="SteamAuth">
-      <HintPath>..\..\..\..\..\CSharp\JCorePanel\Extern\SteamAuth.dll</HintPath>
+      <HintPath>..\..\SteamAuth\SteamAuth\bin\Debug\netstandard2.0\SteamAuth.dll</HintPath>
     </Reference>
     <Reference Include="SteamKit2">
-      <HintPath>..\..\..\..\..\CSharp\JCorePanel\Extern\SteamKit2.dll</HintPath>
+      <HintPath>..\..\SteamKit2\SteamKit2\SteamKit2\bin\Debug\netstandard2.0\SteamKit2.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.AppContext, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
