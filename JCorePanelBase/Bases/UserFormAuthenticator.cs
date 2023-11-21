@@ -39,23 +39,8 @@ namespace JCorePanelBase
 
         public async Task<string> GetEmailCodeAsync(string email, bool previousCodeWasIncorrect)
         {
-
-            string message = "Enter the code sent to your email:";
-            if (previousCodeWasIncorrect)
-            {
-                message = "The code you provided was invalid. Enter the code sent to your email:";
-            }
-            string userCode = "AAA";
-            GlobalMenager.ShowInput(message, "Email Code", (Code) =>
-            {
-                userCode = Code;
-            });
-            while (userCode == "AAA")
-                await Task.Delay(500);
-
-            return await Task.FromResult(userCode);
-            /* InputForm emailForm = new InputForm(message);
-             emailForm.ShowDialog();*/
+            GlobalMenager.ShowDialog("Email SteamGuard is not supported");
+            return "AAA";
 
         }
     }
