@@ -1,30 +1,18 @@
 ﻿using Newtonsoft.Json;
 using SteamAuth;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Management;
 using System.Net;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using ZXing;
 
 namespace JCorePanelBase
 {
     public static class Utils
     {
-
-        public static bool HasQRCode(Bitmap bitmap)
-        {
-            BarcodeReader barcodeReader = new BarcodeReader();
-            Result[] results = barcodeReader.DecodeMultiple(bitmap);
-
-            return results != null && results.Length > 0;
-        }
         public static Process[] GetProcessesByParentPID(int parentPID, string processName)
         {
             Process[] processes = Process.GetProcessesByName(processName);

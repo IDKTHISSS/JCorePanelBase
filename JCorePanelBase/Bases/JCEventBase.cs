@@ -1,10 +1,6 @@
 ﻿using JCorePanelBase.Structures;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace JCorePanelBase
 {
@@ -79,7 +75,7 @@ namespace JCorePanelBase
         {
             foreach (JCEventProperty property in Properties)
             {
-                if(property.Name == propertieName) return property.Value;
+                if (property.Name == propertieName) return property.Value;
             }
             return null;
         }
@@ -92,7 +88,7 @@ namespace JCorePanelBase
         }
         public void AddProperty(JCEventProperty property)
         {
-            if(GetPropertie(property.Name) == null)
+            if (GetPropertie(property.Name) == null)
             {
                 Properties.Add(property);
             }

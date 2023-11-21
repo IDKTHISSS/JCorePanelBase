@@ -13,14 +13,14 @@ namespace JCorePanelBase
         {
             ProcessStartInfo processStartInfo = new ProcessStartInfo();
             processStartInfo.FileName = CustomSteamPath == null ? GlobalMenager.GetSteamPath() : CustomSteamPath;
-            processStartInfo.Arguments = $"-login {Account.AccountInfo.Login} {Account.AccountInfo.Password} " + (Params == null ? "" : Params);
+            processStartInfo.Arguments = (Params == null ? "" : Params);
             Process SteamProcess = Process.Start(processStartInfo);
             Thread.Sleep(5000);
             if (Account.AccountInfo.MaFile == null)
             {
                 return new JCSteamGuardResponse(true, "MaFile is not loaded.", SteamProcess.Id);
             }
-            Thread.Sleep(10000);
+            Thread.Sleep(5000);
             Process[] processes = Utils.GetProcessesByParentPID(SteamProcess.Id, "steamwebhelper");
             while (!NeedInput(processes))
             {
@@ -52,7 +52,7 @@ namespace JCorePanelBase
         {
             foreach (var process in processes)
             {
-                if (Utils.HasQRCode(ScreenCapturer.Capture(process.MainWindowHandle, 0, 0, 844, 527)))
+                if (Win32.IsWindowVisible(process.MainWindowHandle))
                 {
                     return true;
                 }

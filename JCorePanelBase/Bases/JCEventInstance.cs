@@ -1,23 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace JCorePanelBase
+﻿namespace JCorePanelBase
 {
-    
+
     public delegate void TaskIsInWorkChangedEventHandler(bool newStatus);
 
     public class JCEventInstance
     {
-       
+
         private bool _IsInWork;
 
 
         public event TaskIsInWorkChangedEventHandler IsInWorkChangedHandler;
-        
+
 
         public bool IsInWork
         {
@@ -34,17 +27,17 @@ namespace JCorePanelBase
                 }
             }
         }
-       
+
         protected virtual void OnIsInWorkChanged(bool newValue)
         {
             IsInWorkChangedHandler?.Invoke(newValue);
         }
-        
-        
+
+
         public void SetIsInWork(bool newValue)
         {
             IsInWork = newValue;
         }
-       
+
     }
 }

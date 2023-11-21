@@ -1,17 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using Newtonsoft.Json;
 using SteamAuth;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using OpenQA.Selenium;
-using System.IO;
-using static SteamKit2.DepotManifest;
-using static SteamKit2.Internal.CCredentials_GetSteamGuardDetails_Response;
+using SteamKit2;
 using SteamKit2.Authentication;
 using SteamKit2.Internal;
-using SteamKit2;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 using SessionData = SteamAuth.SessionData;
 
 namespace JCorePanelBase
@@ -20,12 +14,13 @@ namespace JCorePanelBase
     {
         public string Login;
         public string Password;
+        public SessionData Session;
         public SteamGuardAccount MaFile;
 
         public void UpdateSteamGuardAccountData(SteamGuardAccount newSteamGuardAccount)
         {
             if (!Directory.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Accounts"))) return;
-        
+
             string[] files = Directory.GetFiles(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Accounts"));
             foreach (string file in files)
             {
@@ -38,8 +33,10 @@ namespace JCorePanelBase
                     {
                         JCSteamAccount steamAccount = JsonConvert.DeserializeObject<JCSteamAccount>(json);
 
-                        if(steamAccount.Login.ToLower() == newSteamGuardAccount.AccountName.ToLower()) {
+                        if (steamAccount.Login.ToLower() == newSteamGuardAccount.AccountName.ToLower())
+                        {
                             steamAccount.MaFile = newSteamGuardAccount;
+                            steamAccount.Session = newSteamGuardAccount.Session;
                             File.WriteAllText(file, JsonConvert.SerializeObject(steamAccount).ToString());
                         }
                     }
@@ -50,45 +47,40 @@ namespace JCorePanelBase
                 }
             }
         }
-    
+
         public async Task CheckSession()
         {
-            if (MaFile == null) return;
-            string Inventory;
-            
-            try
+            if (Session != null)
             {
-                Inventory = await SteamWeb.GETRequest("https://steamcommunity.com/my/inventory/json/730/2", MaFile.Session.GetCookies());
-            }
-            catch(System.Net.WebException ex)
-            {
-                return;
-            }
+                string Inventory;
 
-            if (Utils.IsValidJson(Inventory)) return;
+                try
+                {
+                    Inventory = await SteamWeb.GETRequest("https://steamcommunity.com/my/inventory/json/730/2", Session.GetCookies());
+                }
+                catch (System.Net.WebException ex)
+                {
+                    return;
+                }
 
+                if (Utils.IsValidJson(Inventory)) return;
+            }
             SteamClient steamClient = new SteamClient();
             steamClient.Connect();
             while (!steamClient.IsConnected)
                 await Task.Delay(500);
             CredentialsAuthSession authSession;
             var SteamGuard = MaFile;
-            try
+            authSession = await steamClient.Authentication.BeginAuthSessionViaCredentialsAsync(new AuthSessionDetails
             {
-                authSession = await steamClient.Authentication.BeginAuthSessionViaCredentialsAsync(new AuthSessionDetails
-                {
-                    Username = Login,
-                    Password = Password,
-                    IsPersistentSession = false,
-                    PlatformType = EAuthTokenPlatformType.k_EAuthTokenPlatformType_MobileApp,
-                    ClientOSType = EOSType.Android9,
-                    Authenticator = new UserFormAuthenticator(SteamGuard),
-                });
-            }
-            catch (Exception ex)
-            {
-                return;
-            }
+                Username = Login,
+                Password = Password,
+                IsPersistentSession = false,
+                PlatformType = EAuthTokenPlatformType.k_EAuthTokenPlatformType_MobileApp,
+                ClientOSType = EOSType.Android9,
+                Authenticator = new UserFormAuthenticator(SteamGuard),
+            });
+
             AuthPollResult pollResponse;
             try
             {
@@ -100,7 +92,6 @@ namespace JCorePanelBase
                 return;
             }
 
-            // Build a SessionData object
             SessionData sessionData = new SessionData()
             {
                 SteamID = authSession.SteamID.ConvertToUInt64(),
@@ -108,8 +99,9 @@ namespace JCorePanelBase
                 RefreshToken = pollResponse.RefreshToken,
             };
             MaFile.Session = sessionData;
+            Session = sessionData;
             UpdateSteamGuardAccountData(MaFile);
-            
+
         }
     }
 }
